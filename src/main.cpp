@@ -2,17 +2,24 @@
 #include "camera_index.h"
 #include "Arduino.h"
 #include "fd_forward.h"
+#include "fr_forward.h"
 
 #include <SPI.h>
 #include <TFT_eSPI.h>
 TFT_eSPI tft = TFT_eSPI();
 #include <TFT_eFEX.h>
-TFT_eFEX  fex = TFT_eFEX(&tft);
+TFT_eFEX fex = TFT_eFEX(&tft);
 
 static esp_err_t take_photo();
 
+void init_face_id();
+
+void open_door();
+
+static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_boxes);
+
 String filelist;
-camera_fb_t * fb = NULL;
+camera_fb_t *fb = NULL;
 String incoming;
 long current_millis;
 long last_capture_millis = 0;
@@ -21,22 +28,35 @@ char strftime_buf[64];
 long file_number = 0;
 
 // CAMERA_MODEL_AI_THINKER
-#define PWDN_GPIO_NUM     32
-#define RESET_GPIO_NUM    -1
-#define XCLK_GPIO_NUM      0
-#define SIOD_GPIO_NUM     26
-#define SIOC_GPIO_NUM     27
-#define Y9_GPIO_NUM       35
-#define Y8_GPIO_NUM       34
-#define Y7_GPIO_NUM       39
-#define Y6_GPIO_NUM       36
-#define Y5_GPIO_NUM       21
-#define Y4_GPIO_NUM       19
-#define Y3_GPIO_NUM       18
-#define Y2_GPIO_NUM        5
-#define VSYNC_GPIO_NUM    25
-#define HREF_GPIO_NUM     23
-#define PCLK_GPIO_NUM     22
+#define PWDN_GPIO_NUM 32
+#define RESET_GPIO_NUM -1
+#define XCLK_GPIO_NUM 0
+#define SIOD_GPIO_NUM 26
+#define SIOC_GPIO_NUM 27
+#define Y9_GPIO_NUM 35
+#define Y8_GPIO_NUM 34
+#define Y7_GPIO_NUM 39
+#define Y6_GPIO_NUM 36
+#define Y5_GPIO_NUM 21
+#define Y4_GPIO_NUM 19
+#define Y3_GPIO_NUM 18
+#define Y2_GPIO_NUM 5
+#define VSYNC_GPIO_NUM 25
+#define HREF_GPIO_NUM 23
+#define PCLK_GPIO_NUM 22
+
+#define ENROLL_CONFIRM_TIMES 5
+#define FACE_ID_SAVE_NUMBER 2
+
+//#define RELAY_PIN 2
+#define LED_PIN 4
+
+typedef struct
+{
+  uint8_t *image;
+  box_array_t *net_boxes;
+  dl_matrix3d_t *face_id;
+} img_process_result;
 
 static inline mtmn_config_t app_mtmn_config()
 {
@@ -58,16 +78,27 @@ static inline mtmn_config_t app_mtmn_config()
 }
 mtmn_config_t mtmn_config = app_mtmn_config();
 
-void setup() {
+img_process_result out_res = {0};
+
+static dl_matrix3du_t *aligned_face = NULL;
+
+static int8_t enroll_enabled = 1;
+
+static face_id_list id_list = {0};
+
+unsigned long door_opened_millis = 0;
+
+void setup()
+{
   Serial.begin(115200);
-  
-  pinMode(4, OUTPUT);// initialize io4 as an output for LED flash.
+
+  pinMode(4, OUTPUT);   // initialize io4 as an output for LED flash.
   digitalWrite(4, LOW); // flash off/
 
   tft.begin();
-  tft.setRotation(3);  // 0 & 2 Portrait. 1 & 3 landscape
+  tft.setRotation(3); // 0 & 2 Portrait. 1 & 3 landscape
   tft.fillScreen(TFT_BLACK);
-  tft.setCursor(35,55);
+  tft.setCursor(35, 55);
   tft.setTextColor(TFT_WHITE);
   tft.setTextSize(1);
   tft.println("Bem vindo");
@@ -95,12 +126,15 @@ void setup() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
 
-  //init with high specs to pre-allocate larger buffers
-  if (psramFound()) {
+  // init with high specs to pre-allocate larger buffers
+  if (psramFound())
+  {
     config.frame_size = FRAMESIZE_UXGA;
     config.jpeg_quality = 10;
     config.fb_count = 2;
-  } else {
+  }
+  else
+  {
     config.frame_size = FRAMESIZE_SVGA;
     config.jpeg_quality = 12;
     config.fb_count = 1;
@@ -108,22 +142,37 @@ void setup() {
 
   // camera init
   cam_err = esp_camera_init(&config);
-  if (cam_err != ESP_OK) {
+  if (cam_err != ESP_OK)
+  {
     Serial.printf("Camera init failed with error 0x%x", cam_err);
     return;
   }
 
-  sensor_t * s = esp_camera_sensor_get();
+  sensor_t *s = esp_camera_sensor_get();
   s->set_framesize(s, FRAMESIZE_QQVGA);
   s->set_vflip(s, 1);
 
-  if (!SPIFFS.begin()) {
+  if (!SPIFFS.begin())
+  {
     Serial.println("SPIFFS initialisation failed!");
-    SPIFFS.begin(true);// Formats SPIFFS - could lose data https://github.com/espressif/arduino-esp32/issues/638
+    SPIFFS.begin(true); // Formats SPIFFS - could lose data https://github.com/espressif/arduino-esp32/issues/638
   }
   Serial.println("\r\nInitialisation done.");
 
   fex.listSPIFFS(); // Lists the files so you can see what is in the SPIFFS
+
+  init_face_id();
+}
+
+void init_face_id()
+{
+  face_id_init(&id_list, FACE_ID_SAVE_NUMBER, ENROLL_CONFIRM_TIMES);
+  aligned_face = dl_matrix3du_alloc(1, FACE_WIDTH, FACE_HEIGHT, 3);
+  Serial.println(id_list.head);
+  Serial.println(id_list.tail);
+  Serial.println(id_list.count);
+  Serial.println(id_list.size);
+  //read_face_id_from_flash_with_name(&st_face_list);
 }
 
 // void onEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)
@@ -146,7 +195,7 @@ void setup() {
 //     SPIFFS.remove("/selfie_t_" + fileId + ".jpg");
 //     SPIFFS.remove("/selfie_f_" + fileId + ".jpg");
 //     client->text("removed:" + deletefile); // file deleted. request browser update
-    
+
 //   } else {
 //     Serial.println("sending list");
 //     client->text(filelist_spiffs());
@@ -160,9 +209,10 @@ String filelist_spiffs()
   fs::File root = SPIFFS.open("/");
 
   fs::File file = root.openNextFile();
-  while (file) {
+  while (file)
+  {
     String fileName = file.name();
-    // Serial.println(fileName);
+    Serial.println(fileName);
     filelist = filelist + fileName;
     file = root.openNextFile();
   }
@@ -175,7 +225,8 @@ void latestFileSPIFFS()
   fs::File root = SPIFFS.open("/");
 
   fs::File file = root.openNextFile();
-  while (file) {
+  while (file)
+  {
     String fileName = file.name();
     Serial.println(fileName);
     int fromUnderscore = fileName.lastIndexOf('_') + 1;
@@ -190,23 +241,31 @@ void latestFileSPIFFS()
 bool face_detected()
 {
   fb = esp_camera_fb_get();
-  dl_matrix3du_t *image_matrix = NULL;
-  image_matrix = dl_matrix3du_alloc(1, fb->width, fb->height, 3);
-  fmt2rgb888(fb->buf, fb->len, fb->format, image_matrix->item);
-  box_array_t *net_boxes = NULL;
-  net_boxes = face_detect(image_matrix, &mtmn_config);
+  dl_matrix3du_t *image_matrix = dl_matrix3du_alloc(1, fb->width, fb->height, 3);
+  out_res.image = image_matrix->item;
+  out_res.net_boxes = NULL;
 
-  if (net_boxes) {
-    free(net_boxes->score);
-    free(net_boxes->box);
-    free(net_boxes->landmark);
-    free(net_boxes);
+  fmt2rgb888(fb->buf, fb->len, fb->format, out_res.image);
+
+  out_res.net_boxes = face_detect(image_matrix, &mtmn_config);
+
+  if (out_res.net_boxes) {    
+    Serial.println("face  detected");    
+    run_face_recognition(image_matrix, out_res.net_boxes);
+      
+    free(out_res.net_boxes->score);
+    free(out_res.net_boxes->box);
+    free(out_res.net_boxes->landmark);
+    free(out_res.net_boxes);
+
     dl_matrix3du_free(image_matrix);
-    Serial.println("face  detected");
+
     esp_camera_fb_return(fb);
     fb = NULL;
     return true;
-  } else {
+  }
+  else
+  {
     dl_matrix3du_free(image_matrix);
 
     esp_camera_fb_return(fb);
@@ -215,16 +274,69 @@ bool face_detected()
   }
 }
 
+static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_boxes) {
+  dl_matrix3du_t *aligned_face = NULL;
+  int matched_id = 0;
+
+  aligned_face = dl_matrix3du_alloc(1, FACE_WIDTH, FACE_HEIGHT, 3);
+  if(!aligned_face){
+      Serial.println("Não foi possível alocar buffer de reconhecimento facial");
+      return matched_id;
+  }
+  if (align_face(net_boxes, image_matrix, aligned_face) == ESP_OK)
+  {
+    if (enroll_enabled == 1) { // cadastrando rosto
+      int8_t left_sample_face = enroll_face(&id_list, aligned_face);
+      
+      Serial.printf("Inscrevendo-se Face ID: %d sample %d\n", id_list.tail, ENROLL_CONFIRM_TIMES - left_sample_face);
+      if (left_sample_face == 0){
+        enroll_enabled = 0;
+        Serial.printf("Inscrito Face ID: %d\n", id_list.tail);
+      }
+    } else { // reconhecimento
+      matched_id = recognize_face(&id_list, aligned_face);
+      if (matched_id >= 0) {
+        Serial.println(id_list.head);
+        Serial.println(id_list.tail);
+        Serial.println(id_list.count);
+        Serial.println(id_list.size);
+        open_door();
+        Serial.printf("Correspondente Face ID: %u\n", matched_id);
+      } else {
+        Serial.println("Nenhuma correspondente encontrado");
+        matched_id = -1;
+      }
+    }
+  } else {
+    Serial.println("Rosto não alinhado");
+  }
+
+  dl_matrix3du_free(aligned_face);
+  return matched_id;
+}
+
+void open_door() {
+  if (digitalRead(LED_PIN) == LOW) {
+    digitalWrite(LED_PIN, HIGH);
+    Serial.println("Porta Destrancada");
+    delay(5000);
+    digitalWrite(LED_PIN, LOW);
+    Serial.println("Porta Trancada");
+  }
+}
+
 void smile_for_the_camera()
 {
   long timer_millis = millis();
-  while (millis() - timer_millis < 500) {
-    if (!face_detected()) { // if face disappears stop
+  while (millis() - timer_millis < 500)
+  {
+    if (!face_detected())
+    { // se nenhum rosto aparecer
       Serial.println("face not detected");
       return;
     }
   }
-  digitalWrite(4, HIGH); // flash on
+  digitalWrite(LED_PIN, HIGH); // flash on
   fex.drawJpgFile(SPIFFS, "/_count3.jpg", 0, 0);
   delay(400);
   fex.drawJpgFile(SPIFFS, "/_count2.jpg", 0, 0);
@@ -232,48 +344,54 @@ void smile_for_the_camera()
   fex.drawJpgFile(SPIFFS, "/_count1.jpg", 0, 0);
   delay(400);
 
-  take_photo();
-  digitalWrite(4, LOW);
+  //take_photo();
+  digitalWrite(LED_PIN, LOW);
 }
 
 static esp_err_t take_photo()
 {
-  latestFileSPIFFS(); // next file number
+  latestFileSPIFFS(); // próximo número do arquivo
   file_number++;
   Serial.println(file_number);
   Serial.println("Starting thumb capture: ");
   fb = esp_camera_fb_get();
-  fex.drawJpg((const uint8_t*)fb->buf, fb->len, 0, 6);
-  //save thumb
-  char *thumb_filename = (char*)malloc(23 + sizeof(file_number));
+  fex.drawJpg((const uint8_t *)fb->buf, fb->len, 0, 6);
+  // salve o polegar
+  char *thumb_filename = (char *)malloc(23 + sizeof(file_number));
   sprintf(thumb_filename, "/spiffs/selfie_t_%d.jpg", file_number);
   Serial.println("Opening file: ");
   FILE *thumbnail = fopen(thumb_filename, "w");
-  if (thumbnail != NULL)  {
-    size_t err = fwrite(fb->buf, 1, fb->len, thumbnail);
-    Serial.printf("File saved: %s\n", thumb_filename);
-  }  else  {
-    Serial.println("Could not open file");
+  if (thumbnail != NULL)
+  {
+    fwrite(fb->buf, 1, fb->len, thumbnail);
+    Serial.printf("Arquivo salvo: %s\n", thumb_filename);
+  }
+  else
+  {
+    Serial.println("Não pode abrir arquivo");
   }
   fclose(thumbnail);
   esp_camera_fb_return(fb);
   fb = NULL;
   free(thumb_filename);
 
-  Serial.println("Starting main capture: ");
-  sensor_t * s = esp_camera_sensor_get();
+  Serial.println("Iniciando captura principal: ");
+  sensor_t *s = esp_camera_sensor_get();
   s->set_framesize(s, FRAMESIZE_SVGA);
   delay(500);
   fb = esp_camera_fb_get();
-  char *full_filename = (char*)malloc(23 + sizeof(file_number));
+  char *full_filename = (char *)malloc(23 + sizeof(file_number));
   sprintf(full_filename, "/spiffs/selfie_f_%d.jpg", file_number);
   Serial.println("Opening file: ");
   FILE *fullres = fopen(full_filename, "w");
-  if (fullres != NULL)  {
-    size_t err = fwrite(fb->buf, 1, fb->len, fullres);
-    Serial.printf("File saved: %s\n", full_filename);
-  }  else  {
-    Serial.println("Could not open file");
+  if (fullres != NULL)
+  {
+    fwrite(fb->buf, 1, fb->len, fullres);
+    Serial.printf("Arquivo salvo: %s\n", full_filename);
+  }
+  else
+  {
+    Serial.println("Não pode abrir arquivo");
   }
   fclose(fullres);
   esp_camera_fb_return(fb);
@@ -282,20 +400,18 @@ static esp_err_t take_photo()
 
   s->set_framesize(s, FRAMESIZE_QQVGA);
   delay(500);
-  char *addtobrowser = (char*)malloc(24 + sizeof(file_number));
-  sprintf(addtobrowser, "added:selfie_t_%d.jpg", file_number);
 }
-
 
 void loop()
 {
-  if (face_detected()) {
+  if (face_detected())
+  {
     smile_for_the_camera();
   }
   else
   {
     fb = esp_camera_fb_get();
-    fex.drawJpg((const uint8_t*)fb->buf, fb->len, 0, 6);
+    fex.drawJpg((const uint8_t *)fb->buf, fb->len, 0, 6);
     esp_camera_fb_return(fb);
     fb = NULL;
   }
