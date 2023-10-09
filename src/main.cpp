@@ -3,6 +3,7 @@
 #include "Arduino.h"
 #include "fd_forward.h"
 #include "fr_forward.h"
+#include "esp_timer.h"
 
 #include <SPI.h>
 #include <TFT_eSPI.h>
@@ -16,9 +17,15 @@ void open_door();
 
 static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_boxes);
 
-static esp_err_t save_user(int8_t file_number, dl_matrix3du_t *aligned_face);
+static esp_err_t save_user(int8_t user_number, dl_matrix3du_t *aligned_face);
 
 static esp_err_t load_user();
+
+long find_last_number_user_file();
+
+void return_menu(void *arg);
+
+void init_timer(uint64_t period);
 
 camera_fb_t *fb = NULL;
 static esp_err_t cam_err;
@@ -42,9 +49,12 @@ static esp_err_t cam_err;
 #define PCLK_GPIO_NUM 22
 
 #define ENROLL_CONFIRM_TIMES 5
-#define FACE_ID_SAVE_NUMBER 2
+#define FACE_ID_SAVE_NUMBER 3
+#define MAX_NUMBER_USER 3
 
-// #define RELAY_PIN 2
+#define RELAY_PIN 0
+#define PUSH_BUTTON_1 1
+#define PUSH_BUTTON_2 3
 #define LED_PIN 4
 
 static inline mtmn_config_t app_mtmn_config()
@@ -71,12 +81,29 @@ static int8_t enroll_enabled = 1;
 
 static face_id_list id_list = {0};
 
+long user_number = 0;
+
+static bool select_option = false;
+
+uint32_t microseconds = 1000000;
+
+int password[3] = {4, 2, 3}; // Inicialize a senha com zeros
+int password_temp[3] = {0, 0, 0};
+int current_position = 0; // Posição do dígito atual
+
+esp_timer_handle_t timer;
+
 void setup()
 {
   Serial.begin(115200);
 
-  pinMode(4, OUTPUT);   // initialize io4 as an output for LED flash.
-  digitalWrite(4, LOW); // flash off/
+  // inicializando pinos de entrada e saída
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(RELAY_PIN, OUTPUT);
+  pinMode(PUSH_BUTTON_1, INPUT_PULLUP);
+  pinMode(PUSH_BUTTON_2, INPUT_PULLUP);
+  digitalWrite(LED_PIN, LOW); // flash off
+  digitalWrite(RELAY_PIN, LOW);
 
   tft.begin();
   tft.setRotation(2); // 0 & 2 Portrait. 1 & 3 landscape
@@ -140,9 +167,10 @@ void setup()
     Serial.println("Falha na inicialização do SPIFFS!");
     SPIFFS.begin(true);
   }
-  // Serial.println("\r\nInicialização concluída.");
+  Serial.println("\r\nInicialização concluída.");
+  Serial.println(psramFound());
 
-  fex.listSPIFFS(); // Lista os arquivos para que você possa ver o que está no SPIFFS
+  fex.listSPIFFS(); // Lista os arquivos do SPIFFS
 
   init_face_id();
 }
@@ -181,12 +209,18 @@ bool face_detected()
     if (id_face >= 0)
     {
       // Serial.printf("ID do rosto cadastrado: %u\n", id_face);
+      fex.drawJpgFile(SPIFFS, "/_success.jpg", 0, 0);
       open_door();
+      delay(400);
     }
     else
     {
+      fex.drawJpgFile(SPIFFS, "/_failure.jpg", 0, 0);
+      delay(400);
       Serial.println("Nenhum rosto correspondente encontrado");
     }
+
+    select_option = false;
 
     return true;
   }
@@ -204,6 +238,11 @@ static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_b
 {
   dl_matrix3du_t *aligned_face = NULL;
   int matched_id = -1;
+
+  if (MAX_NUMBER_USER == user_number)
+  {
+    return matched_id;
+  }
 
   aligned_face = dl_matrix3du_alloc(1, FACE_WIDTH, FACE_HEIGHT, 3);
 
@@ -224,7 +263,7 @@ static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_b
       if (id_example == 0)
       {
         enroll_enabled = 0;
-        Serial.printf("Inscrito Face ID: %d\n", id_list.tail);
+        matched_id = 0;
       }
     }
     else
@@ -243,39 +282,24 @@ static int run_face_recognition(dl_matrix3du_t *image_matrix, box_array_t *net_b
 
 void open_door()
 {
-  if (digitalRead(LED_PIN) == LOW)
+  if (digitalRead(RELAY_PIN) == LOW)
   {
-    digitalWrite(LED_PIN, HIGH);
+    digitalWrite(RELAY_PIN, HIGH);
     // Serial.println("Porta Destrancada");
-    delay(5000);
-    digitalWrite(LED_PIN, LOW);
-    // Serial.println("Porta Trancada");
+    delay(200); // Debounce
+    digitalWrite(RELAY_PIN, LOW);
   }
 }
 
-void smile_for_the_camera()
+static esp_err_t save_user(int8_t number_file, dl_matrix3du_t *aligned_face)
 {
-  long timer_millis = millis();
-  while (millis() - timer_millis < 500)
-  {
-    if (!face_detected())
-    {
-      Serial.println("Rosto não detectado");
-      return;
-    }
-  }
-  fex.drawJpgFile(SPIFFS, "/_count3.jpg", 0, 0);
-  delay(400);
-  fex.drawJpgFile(SPIFFS, "/_count2.jpg", 0, 0);
-  delay(400);
-  fex.drawJpgFile(SPIFFS, "/_count1.jpg", 0, 0);
-  delay(400);
-}
+  size_t last_number = (int)find_last_number_user_file();
 
-static esp_err_t save_user(int8_t file_number, dl_matrix3du_t *aligned_face)
-{
-  char *matrix_filename = (char *)malloc(33 + sizeof(file_number));
-  sprintf(matrix_filename, "/spiffs/usuario_1/d_matrix_%d.obj", file_number);
+  last_number += 1;
+  user_number = last_number;
+
+  char *matrix_filename = (char *)malloc(33 + sizeof(number_file));
+  sprintf(matrix_filename, "/spiffs/usuario_%d/d_matrix_%d.obj", user_number, number_file);
 
   FILE *matrix_file = fopen(matrix_filename, "wb");
   if (matrix_file != NULL)
@@ -287,7 +311,7 @@ static esp_err_t save_user(int8_t file_number, dl_matrix3du_t *aligned_face)
   free(matrix_filename);
 
   char *buffer_filename = (char *)malloc(33 + sizeof(size_t));
-  sprintf(buffer_filename, "/spiffs/usuario_1/d_buffer_%d.dat", file_number);
+  sprintf(buffer_filename, "/spiffs/usuario_%d/d_buffer_%d.dat", user_number, number_file);
 
   FILE *buffer_file = fopen(buffer_filename, "wb");
   if (buffer_file != NULL)
@@ -302,53 +326,193 @@ static esp_err_t save_user(int8_t file_number, dl_matrix3du_t *aligned_face)
 
 static esp_err_t load_user()
 {
-  for (size_t i = 0; i < 5; i++)
+  size_t last_number = (int)find_last_number_user_file();
+
+  for (size_t user_number = 1; user_number <= last_number; user_number++)
   {
-    dl_matrix3du_t *aligned_face = dl_matrix3du_alloc(1, FACE_WIDTH, FACE_HEIGHT, 3);
-
-    char *matrix_filename = (char *)malloc(33 + sizeof(size_t));
-    sprintf(matrix_filename, "/spiffs/usuario_1/d_matrix_%d.obj", i);
-    // Serial.println(matrix_filename);
-
-    FILE *matrix_file = fopen(matrix_filename, "rb");
-    if (matrix_file != NULL)
+    for (size_t number_file = 0; number_file < ENROLL_CONFIRM_TIMES; number_file++)
     {
-      fread(aligned_face, sizeof(dl_matrix3du_t), 1, matrix_file);
-      fclose(matrix_file);
+      dl_matrix3du_t *aligned_face = dl_matrix3du_alloc(1, FACE_WIDTH, FACE_HEIGHT, 3);
+
+      char *matrix_filename = (char *)malloc(33 + sizeof(size_t));
+      sprintf(matrix_filename, "/spiffs/usuario_%d/d_matrix_%d.obj", user_number, number_file);
+      // Serial.println(matrix_filename);
+
+      FILE *matrix_file = fopen(matrix_filename, "rb");
+      if (matrix_file != NULL)
+      {
+        fread(aligned_face, sizeof(dl_matrix3du_t), 1, matrix_file);
+        fclose(matrix_file);
+      }
+      free(matrix_filename);
+
+      char *buffer_filename = (char *)malloc(33 + sizeof(size_t));
+      sprintf(buffer_filename, "/spiffs/usuario_%d/d_buffer_%d.dat", user_number, number_file);
+      // Serial.println(buffer_filename);
+
+      FILE *buffer_file = fopen(buffer_filename, "rb");
+      if (matrix_file != NULL)
+      {
+        fread(aligned_face->item, sizeof(uc_t), FACE_WIDTH * FACE_HEIGHT * 3, buffer_file);
+        fclose(buffer_file);
+      }
+      free(buffer_filename);
+
+      int8_t id_example = enroll_face(&id_list, aligned_face);
+      // Serial.printf("Inscrevendo-se Face ID: %d Exemplo %d\n", id_list.tail, id_example);
     }
-    free(matrix_filename);
+  }
+}
 
-    char *buffer_filename = (char *)malloc(33 + sizeof(size_t));
-    sprintf(buffer_filename, "/spiffs/usuario_1/d_buffer_%d.dat", i);
-    // Serial.println(buffer_filename);
+long find_last_number_user_file()
+{
+  if (user_number == 0)
+  {
+    fs::File root = SPIFFS.open("/");
 
-    FILE *buffer_file = fopen(buffer_filename, "rb");
-    if (matrix_file != NULL)
+    fs::File file = root.openNextFile();
+    while (file)
     {
-      fread(aligned_face->item, sizeof(uc_t), FACE_WIDTH * FACE_HEIGHT * 3, buffer_file);
-      fclose(buffer_file);
+      String fileName = file.name();
+      Serial.println(fileName); //
+      int fromUnderscore = fileName.indexOf('_') + 1;
+      int untilDot = fileName.lastIndexOf('/');
+      String fileId = fileName.substring(fromUnderscore, untilDot);
+      Serial.println(fileId); //
+      user_number = max(user_number, fileId.toInt());
+      file = root.openNextFile();
     }
-    free(buffer_filename);
+    return user_number;
+  }
+  return user_number;
+}
 
-    int8_t id_example = enroll_face(&id_list, aligned_face);
+void initial_count()
+{
+  fex.drawJpgFile(SPIFFS, "/_count3.jpg", 0, 0);
+  delay(400);
+  fex.drawJpgFile(SPIFFS, "/_count2.jpg", 0, 0);
+  delay(400);
+  fex.drawJpgFile(SPIFFS, "/_count1.jpg", 0, 0);
+  delay(400);
+}
 
-    // Serial.printf("Inscrevendo-se Face ID: %d Exemplo %d\n", id_list.tail, id_example);
+void camera_live_stream()
+{
+  fb = esp_camera_fb_get();
+  fex.drawJpg((const uint8_t *)fb->buf, fb->len, 0, 6);
+  esp_camera_fb_return(fb);
+  fb = NULL;
+}
+
+void menu_option()
+{
+  fex.drawJpgFile(SPIFFS, "/_initial.jpg", 0, 0);
+  delay(200); // Debounce
+
+  if (digitalRead(PUSH_BUTTON_1) == HIGH || digitalRead(PUSH_BUTTON_2) == HIGH)
+  {
+    select_option = true;
+    if (digitalRead(PUSH_BUTTON_2) == HIGH)
+    {
+      enroll_enabled = 1;
+    }
+    else
+    {
+      enroll_enabled = 0;
+    }
+
+    init_timer(30 * microseconds);
+
+    initial_count();
+    digitalWrite(LED_PIN, HIGH);
+  }
+}
+
+void register_password()
+{
+  char *display_text = (char *)malloc(65 + sizeof(size_t));
+  sprintf(display_text, "Digite o segredo: \n Posição: [%d]  \n  Segredo: [ %d/ %d / %d ] ", current_position, password_temp[0], password_temp[1], password_temp[2]);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_WHITE);
+  tft.setTextSize(2);
+  tft.println(display_text);
+
+  if (digitalRead(PUSH_BUTTON_1) == HIGH)
+  {
+    password_temp[current_position] = (password_temp[current_position] + 1) % 10; // Incrementar o dígito
+    delay(200);                                                                   // Debounce
   }
 
-  enroll_enabled = 0;
+  // Ler o botão de alterar a posição do dígito
+  if (digitalRead(PUSH_BUTTON_2) == HIGH)
+  {
+    current_position = (current_position + 1) % 3; // Avançar para a próxima posição
+    delay(200);                                    // Debounce
+  }
+
+  bool is_same = true;
+
+  // Comparar os elementos dos dois vetores
+  for (int i = 0; i < 3; i++)
+  {
+    if (password_temp[i] != password[i])
+    {
+      is_same = false;
+      break;
+    }
+  }
+
+  if (is_same)
+  {
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextColor(TFT_WHITE);
+    tft.setTextSize(2);
+    tft.println("Senha correta.");
+  }
+  else
+  {
+    printf("Senha incorreta.\n");
+  }
+}
+
+void login_or_registration()
+{
+  if (!face_detected())
+  {
+    camera_live_stream();
+  }
+}
+
+void return_menu(void *arg)
+{
+  select_option = false;
+}
+
+void init_timer(uint64_t period)
+{
+  Serial.println("Inializando Timer");
+  esp_timer_create_args_t timer_args = {
+      .callback = &return_menu,
+      .arg = NULL,
+      .dispatch_method = ESP_TIMER_TASK,
+      .name = "timer_menu"};
+  esp_timer_stop(timer);
+  esp_timer_delete(timer);
+  esp_timer_create(&timer_args, &timer);
+  esp_timer_start_periodic(timer, period);
+  Serial.println("Finalizando Timer");
 }
 
 void loop()
 {
-  if (face_detected())
+  if (select_option)
   {
-    smile_for_the_camera();
+    login_or_registration();
   }
   else
   {
-    fb = esp_camera_fb_get();
-    fex.drawJpg((const uint8_t *)fb->buf, fb->len, 0, 6); // Desenha no display
-    esp_camera_fb_return(fb);
-    fb = NULL;
+    menu_option();
   }
 }
