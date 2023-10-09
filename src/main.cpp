@@ -83,7 +83,7 @@ static face_id_list id_list = {0};
 
 long user_number = 0;
 
-static bool select_option = false;
+static int selected_option = 0;
 
 uint32_t microseconds = 1000000;
 
@@ -196,6 +196,8 @@ bool face_detected()
     Serial.println("Rosto detectado");
     int id_face = run_face_recognition(image_matrix, box_face_detect);
 
+    digitalWrite(LED_PIN, LOW);
+
     free(box_face_detect->score);
     free(box_face_detect->box);
     free(box_face_detect->landmark);
@@ -220,7 +222,7 @@ bool face_detected()
       Serial.println("Nenhum rosto correspondente encontrado");
     }
 
-    select_option = false;
+    selected_option = 0;
 
     return true;
   }
@@ -410,26 +412,27 @@ void menu_option()
   fex.drawJpgFile(SPIFFS, "/_initial.jpg", 0, 0);
   delay(200); // Debounce
 
-  if (digitalRead(PUSH_BUTTON_1) == HIGH || digitalRead(PUSH_BUTTON_2) == HIGH)
+  if (digitalRead(PUSH_BUTTON_1) == HIGH)
   {
-    select_option = true;
-    if (digitalRead(PUSH_BUTTON_2) == HIGH)
-    {
-      enroll_enabled = 1;
-    }
-    else
-    {
-      enroll_enabled = 0;
-    }
+    selected_option = 1;
+    enroll_enabled = 0;
 
     init_timer(30 * microseconds);
 
     initial_count();
     digitalWrite(LED_PIN, HIGH);
   }
+
+  else if (digitalRead(PUSH_BUTTON_2) == HIGH) 
+  {
+    selected_option = 2;
+    enroll_enabled = 1;
+
+    init_timer(30 * microseconds);
+  }
 }
 
-void register_password()
+bool register_password()
 {
   char *display_text = (char *)malloc(65 + sizeof(size_t));
   sprintf(display_text, "Digite o segredo: \n Posição: [%d]  \n  Segredo: [ %d/ %d / %d ] ", current_position, password_temp[0], password_temp[1], password_temp[2]);
@@ -470,14 +473,16 @@ void register_password()
     tft.setTextColor(TFT_WHITE);
     tft.setTextSize(2);
     tft.println("Senha correta.");
+    return true;
   }
   else
   {
     printf("Senha incorreta.\n");
+    return false;
   }
 }
 
-void login_or_registration()
+void login()
 {
   if (!face_detected())
   {
@@ -485,9 +490,24 @@ void login_or_registration()
   }
 }
 
+void registration()
+{
+  bool secret_found = register_password();
+
+  if (secret_found) 
+  {
+    init_timer(30 * microseconds);
+
+    initial_count();
+    digitalWrite(LED_PIN, HIGH);
+
+    login();
+  }
+}
+
 void return_menu(void *arg)
 {
-  select_option = false;
+  selected_option = 0;
 }
 
 void init_timer(uint64_t period)
@@ -507,12 +527,18 @@ void init_timer(uint64_t period)
 
 void loop()
 {
-  if (select_option)
+  switch (selected_option)
   {
-    login_or_registration();
-  }
-  else
-  {
+  case 1:
+    login();
+    break;
+  
+  case 2:
+    registration();
+    break;
+  
+  default:
     menu_option();
+    break;
   }
 }
