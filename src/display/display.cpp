@@ -6,16 +6,16 @@ TFT_eFEX fex = TFT_eFEX(&tft);
 void display_init()
 {
 	tft.begin();
-	tft.setRotation(2); // 0 & 2 Portrait. 1 & 3 landscape
-	display_write_string("Bem vindo");
-	delay(2000);
+	tft.setRotation(0); // 0 & 2 Portrait. 1 & 3 landscape
+	display_write_string("  Bem   \n \n   Vindo ", TEXT_SIZE_MEDIUM, TFT_DARKGREEN);
+	delay(100);
 }
 
 void init_SPIFFS()
 {
 	if (!SPIFFS.begin())
 	{
-		//Serial.println("Falha na inicialização do SPIFFS!");
+		// Serial.println("Falha na inicialização do SPIFFS!");
 		SPIFFS.begin(true);
 	}
 
@@ -26,38 +26,43 @@ void display_password(int current_position, int password_temp[3])
 {
 	char *display_text = (char *)malloc(95 + sizeof(size_t));
 	sprintf(display_text, "Digite a senha: \n \n  Posicao atual: [%d]  \n \n   -- Segredo: -- \n \n  -- [ %d/ %d / %d ] --", current_position, password_temp[0], password_temp[1], password_temp[2]);
-
-	display_write_char(display_text, 20, 55);
+	//Serial.println(display_text);
+	display_write_char(display_text, 20, 45, TFT_BLACK, TFT_WHITE, TEXT_SIZE_DEFAULT);
+	delay(200);
 
 	free(display_text);
 }
 
-void display_write_string(String text)
+void display_write_string(String text, uint8_t text_size, uint32_t color, int16_t text_color)
 {
 	const char *text_c_str = text.c_str();
-	display_write_char(const_cast<char *>(text_c_str), 35, 55);
+	display_write_char(const_cast<char *>(text_c_str), 25, 55, color, text_color, text_size);
 }
 
-void display_write_char(char * text, int16_t x, int16_t y)
+void display_write_char(char *text, int16_t x, int16_t y, uint32_t color, int16_t text_color, uint8_t text_size)
 {
-	tft.fillScreen(TFT_BLACK);
-	tft.setCursor(35, 55);
-	tft.setTextColor(TFT_WHITE);
-	tft.setTextSize(1);
+	tft.fillScreen(color);
+	tft.setCursor(x, y);
+	tft.setTextColor(text_color);
+	tft.setTextSize(text_size);
 	tft.println(text);
-	delay(2000);
+	delay(200);
 }
 
 void display_success()
 {
 	fex.drawJpgFile(SPIFFS, "/_success.jpeg", 0, 0);
-	delay(400);
+	delay(300);
+	tft.fillScreen(TFT_BLACK);
+	delay(50);
 }
 
 void display_error()
 {
 	fex.drawJpgFile(SPIFFS, "/_failure.jpeg", 0, 0);
-	delay(400);
+	delay(200);
+	tft.fillScreen(TFT_BLACK);
+	delay(50);
 }
 
 void display_menu()
@@ -74,9 +79,11 @@ void display_initial_count()
 	delay(400);
 	fex.drawJpgFile(SPIFFS, "/_count1.jpg", 0, 0);
 	delay(400);
+	tft.fillScreen(TFT_BLACK);
+	delay(100);
 }
 
 void display_live_stream(const uint8_t *buffer, size_t length)
 {
-	fex.drawJpg(buffer, length, 0, 6);
+	fex.drawJpg(buffer, length);
 }

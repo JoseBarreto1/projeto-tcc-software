@@ -2,7 +2,6 @@
 #include "fr_forward.h"
 #include "user.h"
 
-#define MAX_NUMBER_USER 3
-#define ESP_OK          0
+void init_face_id(face_id_list *list, int total_user);
 
-int run_face_recognition(face_id_list *id_list, dl_matrix3du_t *image_matrix, box_array_t *net_boxes, long user_number, bool * enroll_enabled);
+int run_face_recognition(face_id_list *id_list, dl_matrix3du_t *image_matrix, box_array_t *net_boxes, int *user_number, bool * enroll_enabled);

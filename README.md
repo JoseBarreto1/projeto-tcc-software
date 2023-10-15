@@ -8,3 +8,10 @@ Existem três bibliotecas que precisam ser instaladas. O TFT_eSPI pode ser facil
 A biblioteca TFT_eSPI precisa ser configurada para funcionar com o painel TFT ST7735S. Copie o conteúdo do arquivo User_Setup.h para o arquivo de biblioteca recém-instalado User_Setup.h encontrado em Documentos > Arduino > bibliotecas > TFT_eSPI (.pio/libdeps/esp32cam/TFT_eSPI/User_Setup.h).
 
 Caso queira utilizar a animação de contagem regressiva, as imagens para isso precisam ser carregadas na memória do ESP32. Para fazer isso siga as instruções para instalar o uploader de pasta de dados aqui: ESP32 Data Folder Uploader . Lembre-se de que se você alterar o esquema de partição no IDE, esses dados serão sobrescritos.
+
+
+Adicionado recurso para interromper alertas.
+
+// Define no setup para desabilitar todos os #warnings da biblioteca (pode ser colocado em User_Setup_Select.h)
+#define DISABLE_ALL_LIBRARY_WARNINGS
+

@@ -1,29 +1,25 @@
+#include "Arduino.h"
 #include "camera.h"
 #include "camera_index.h"
 #include "constants.h"
 #include "timer.h"
 #include "face_recognition.h"
 
-void init_face_id();
-
 void open_door();
 
 void return_menu(void *arg);
 
+// variaveis globais
 camera_fb_t *fb = NULL;
-
 static face_id_list id_list = {0};
 
 static bool enroll_enabled = true;
+int user_number = 0;
+static int selected_option = MENU_OPTION;
 
-long user_number = 0;
-
-static int selected_option = 0;
-
-int password[3] = {4, 2, 3}; // Inicialize a senha com zeros
+int password[3] = {4, 2, 3};
 int password_temp[3] = {0, 0, 0};
-int current_position = 0; // Posição do dígito atual
-int count_teste = 0;
+int current_position = 0;
 
 void setup()
 {
@@ -36,30 +32,19 @@ void setup()
   pinMode(PUSH_BUTTON_2, INPUT_PULLUP);
   digitalWrite(FLASH_PIN, LOW);
   digitalWrite(RELAY_PIN, LOW);
+  digitalWrite(PUSH_BUTTON_1, LOW);
+  digitalWrite(PUSH_BUTTON_2, LOW);
 
   display_init();
-  delay(4000);
+  delay(400);
 
-  static esp_err_t cam_err = camera_init();
-  if (cam_err != ESP_OK)
-  {
-    Serial.printf("A inicialização da câmera falhou com o seguinte erro: 0x%x", cam_err);
-    return;
-  }
+  camera_init();
 
-  sensor_t *s = esp_camera_sensor_get();
-  s->set_framesize(s, FRAMESIZE_QQVGA);
-  s->set_vflip(s, 1);
-
+  init_sensor_camera();
   init_SPIFFS();
 
-  init_face_id();
-}
-
-void init_face_id()
-{
-  face_id_init(&id_list, FACE_ID_SAVE_NUMBER, ENROLL_CONFIRM_TIMES);
-  load_user(&id_list, &user_number);
+  user_number = find_last_number_user_save();
+  init_face_id(&id_list, user_number);
 }
 
 bool face_detected()
@@ -68,14 +53,13 @@ bool face_detected()
   dl_matrix3du_t *image_matrix = dl_matrix3du_alloc(1, fb->width, fb->height, 3);
   box_array_t *box_face_detect = NULL;
 
-  run_face_detect(fb, image_matrix);
+  box_face_detect = run_face_detect(fb, image_matrix);
 
   if (box_face_detect)
   {
-    Serial.println("Rosto detectado");
-    int id_face = run_face_recognition(&id_list, image_matrix, box_face_detect, user_number, &enroll_enabled);
-
-    digitalWrite(FLASH_PIN, LOW);
+    display_write_string("Processando ... ");
+    // Serial.println("Rosto detectado");
+    int id_face = run_face_recognition(&id_list, image_matrix, box_face_detect, &user_number, &enroll_enabled);
 
     clean_box_face_detect(box_face_detect, image_matrix);
 
@@ -84,18 +68,19 @@ bool face_detected()
 
     if (id_face >= 0)
     {
+      digitalWrite(FLASH_PIN, LOW);
+      selected_option = MENU_OPTION;
       display_success();
       open_door();
-      delay(400);
     }
     else
     {
-      display_error();
-      delay(400);
-      Serial.println("Nenhum rosto correspondente encontrado");
+      if (!enroll_enabled)
+      {
+        display_error();
+        // Serial.println("Nenhum rosto reconhecido");
+      }
     }
-
-    selected_option = 0;
 
     return true;
   }
@@ -131,25 +116,24 @@ void camera_live_stream()
 void menu_option()
 {
   display_menu();
-  delay(400); // Debounce
+  delay(200); // Debounce
 
   if (digitalRead(PUSH_BUTTON_1) == HIGH)
   {
-    selected_option = 1;
-    enroll_enabled = false;
-
-    init_timer(30, &return_menu);
+    init_timer(TIME_DEFAULT, &return_menu);
 
     display_initial_count();
     digitalWrite(FLASH_PIN, HIGH);
+
+    selected_option = LOGIN_OPTION;
+    enroll_enabled = false;
+    return;
   }
 
   else if (digitalRead(PUSH_BUTTON_2) == HIGH)
   {
-    selected_option = 2;
-    enroll_enabled = true;
-
-    init_timer(30, &return_menu);
+    selected_option = REGISTER_OPTION;
+    return;
   }
 }
 
@@ -160,14 +144,14 @@ bool register_password()
   if (digitalRead(PUSH_BUTTON_1) == HIGH)
   {
     password_temp[current_position] = (password_temp[current_position] + 1) % 10; // Incrementar o dígito
-    delay(200);                                                                   // Debounce
+    delay(100);
   }
 
   // Ler o botão de alterar a posição do dígito
   if (digitalRead(PUSH_BUTTON_2) == HIGH)
   {
     current_position = (current_position + 1) % 3; // Avançar para a próxima posição
-    delay(200);                                    // Debounce
+    delay(100);
   }
 
   bool is_same = true;
@@ -184,13 +168,14 @@ bool register_password()
 
   if (is_same)
   {
-    display_write_string("Senha correta.");
-    delay(2000);
+    // Serial.println("Senha correta.\n");
+    display_write_string(" senha \n  correta ", TEXT_SIZE_MEDIUM, TFT_DARKGREEN);
+    delay(800);
     return true;
   }
   else
   {
-    // printf("Senha incorreta.\n");
+    // Serial.println("Senha incorreta.\n");
     return false;
   }
 }
@@ -209,29 +194,32 @@ void registration()
 
   if (is_correct)
   {
-    init_timer(30, &return_menu);
+    init_timer(TIME_DEFAULT, &return_menu);
 
     display_initial_count();
     digitalWrite(FLASH_PIN, HIGH);
 
-    login();
+    selected_option = LOGIN_OPTION;
+    enroll_enabled = true;
+    return;
   }
 }
 
 void return_menu(void *arg)
 {
-  selected_option = 0;
+  digitalWrite(FLASH_PIN, LOW);
+  selected_option = MENU_OPTION;
 }
 
 void loop()
 {
   switch (selected_option)
   {
-  case 1:
+  case LOGIN_OPTION:
     login();
     break;
 
-  case 2:
+  case REGISTER_OPTION:
     registration();
     break;
 

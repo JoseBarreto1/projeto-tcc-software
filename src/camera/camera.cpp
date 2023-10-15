@@ -30,9 +30,21 @@ static inline camera_config_t app_camera_config()
 	return config;
 }
 
+void init_sensor_camera()
+{
+	sensor_t *s = esp_camera_sensor_get();
+	s->set_framesize(s, FRAMESIZE_QQVGA2); // 128x160
+	s->set_vflip(s, 1);
+}
+
 camera_config_t config = app_camera_config();
 
-esp_err_t camera_init()
+void camera_init()
 {
-  return esp_camera_init(&config);
+	static esp_err_t cam_err = esp_camera_init(&config);
+	if (cam_err != ESP_OK)
+	{
+		//printf("A inicialização da câmera falhou com o seguinte erro: 0x%x", cam_err);
+		return;
+	}
 }

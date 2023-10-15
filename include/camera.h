@@ -17,4 +17,6 @@
 #define HREF_GPIO_NUM 23
 #define PCLK_GPIO_NUM 22
 
-esp_err_t camera_init();
+void camera_init();
+
+void init_sensor_camera();
