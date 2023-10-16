@@ -1,4 +1,7 @@
 #include "face_recognition.h"
+#include "face_detect.h"
+#include "debug.h"
+#include "user.h"
 
 int run_face_recognition(face_id_list *id_list, dl_matrix3du_t *image_matrix, box_array_t *net_boxes, int *user_number, bool *enroll_enabled)
 {
@@ -7,6 +10,7 @@ int run_face_recognition(face_id_list *id_list, dl_matrix3du_t *image_matrix, bo
 
 	if (MAX_NUMBER_USER == *user_number)
 	{
+		print("Não foi possível cadastrar novos usuarios");
 		return matched_id;
 	}
 
@@ -14,22 +18,23 @@ int run_face_recognition(face_id_list *id_list, dl_matrix3du_t *image_matrix, bo
 
 	if (!aligned_face)
 	{
-		// Serial.println("Não foi possível alocar buffer de reconhecimento facial");
+		print("Não foi possível alocar buffer de reconhecimento facial");
 		return matched_id;
 	}
 	if (align_face(net_boxes, image_matrix, aligned_face) == ESP_OK)
 	{
 		if (*enroll_enabled)
-		{ // cadastrando rosto
+		{
+			print("cadastrando rosto");
 			int8_t number_file = enroll_face(id_list, aligned_face);
 
-			int next_number = *user_number + 1;
-			save_user(number_file, aligned_face, next_number);
+			int next_user = *user_number + 1;
+			save_user(number_file, aligned_face, next_user);
 
-			// Serial.printf("Inscrevendo-se #: %d\n", number_file);
+			print("Inscrevendo-se #: %d\n", number_file);
 			if (number_file == 0)
 			{
-				*user_number = next_number;
+				*user_number = next_user;
 				*enroll_enabled = false;
 				matched_id = 0;
 			}

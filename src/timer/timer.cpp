@@ -1,10 +1,17 @@
 #include "timer.h"
 
-esp_timer_handle_t timer;
+esp_timer_handle_t timer = NULL;
 uint32_t microseconds = 1000000;
 
 void init_timer(int seconds, esp_timer_cb_t callback)
 {
+  if (timer != NULL)
+  {
+    esp_timer_stop(timer);
+    esp_timer_delete(timer);
+    timer = NULL;
+  }
+
   uint64_t period = seconds * microseconds;
   
   esp_timer_create_args_t timer_args = {

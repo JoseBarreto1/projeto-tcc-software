@@ -1,6 +1,4 @@
-#include "face_detect.h"
 #include "fr_forward.h"
-#include "user.h"
 
 void init_face_id(face_id_list *list, int total_user);
 

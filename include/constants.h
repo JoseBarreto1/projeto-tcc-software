@@ -8,3 +8,4 @@
 #define MENU_OPTION     0
 #define LOGIN_OPTION    1
 #define REGISTER_OPTION 2
+#define MENU_DEFAULT 	3

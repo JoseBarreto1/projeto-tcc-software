@@ -1,5 +1,4 @@
 #include "fr_forward.h"
-#include "display.h"
 
 #define FACE_WIDTH 56
 #define FACE_HEIGHT 56
@@ -13,3 +12,5 @@ void save_user(int8_t number_file, dl_matrix3du_t *aligned_face, int user_number
 void load_user(face_id_list *id_list, int total_user);
 
 int find_last_number_user_save();
+
+bool enter_password(bool push_button_up, bool push_button_down);

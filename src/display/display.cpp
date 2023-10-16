@@ -1,4 +1,5 @@
 #include "display.h"
+#include "debug.h"
 
 TFT_eSPI tft = TFT_eSPI();
 TFT_eFEX fex = TFT_eFEX(&tft);
@@ -7,7 +8,7 @@ void display_init()
 {
 	tft.begin();
 	tft.setRotation(0); // 0 & 2 Portrait. 1 & 3 landscape
-	display_write_string("  Bem   \n \n   Vindo ", TEXT_SIZE_MEDIUM, TFT_DARKGREEN);
+	display_write_string("  Bem   \n \n   vindo ", TEXT_SIZE_MEDIUM, TFT_DARKGREEN);
 	delay(100);
 }
 
@@ -15,7 +16,7 @@ void init_SPIFFS()
 {
 	if (!SPIFFS.begin())
 	{
-		// Serial.println("Falha na inicialização do SPIFFS!");
+		print("Falha na inicialização do SPIFFS!");
 		SPIFFS.begin(true);
 	}
 
@@ -25,8 +26,8 @@ void init_SPIFFS()
 void display_password(int current_position, int password_temp[3])
 {
 	char *display_text = (char *)malloc(95 + sizeof(size_t));
-	sprintf(display_text, "Digite a senha: \n \n  Posicao atual: [%d]  \n \n   -- Segredo: -- \n \n  -- [ %d/ %d / %d ] --", current_position, password_temp[0], password_temp[1], password_temp[2]);
-	//Serial.println(display_text);
+	sprintf(display_text, "Digite a senha: \n \n  posicao atual: [%d]  \n \n   -  segredo:  - \n \n  -  [ %d/ %d / %d ]  -", current_position, password_temp[0], password_temp[1], password_temp[2]);
+	print(display_text);
 	display_write_char(display_text, 20, 45, TFT_BLACK, TFT_WHITE, TEXT_SIZE_DEFAULT);
 	delay(200);
 

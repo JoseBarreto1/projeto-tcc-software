@@ -1,4 +1,5 @@
 #include "esp_camera.h"
+
 // CAMERA_MODEL_AI_THINKER
 #define PWDN_GPIO_NUM 32
 #define RESET_GPIO_NUM -1
@@ -20,3 +21,5 @@
 void camera_init();
 
 void init_sensor_camera();
+
+void camera_live_stream(camera_fb_t *frame_buffer);
