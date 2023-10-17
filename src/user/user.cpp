@@ -3,9 +3,10 @@
 #include "debug.h"
 #include "user.h"
 
-int password[3] = {4, 2, 3};
-int password_temp[3] = {0, 0, 0};
-int current_position = 0;
+static int password[3] = {4, 2, 3};
+static int password_del[3] = {9, 9, 9};
+static int password_temp[3] = {0, 0, 0};
+static int current_position = 0;
 
 void save_user(int8_t number_file, dl_matrix3du_t *aligned_face, int user_number)
 {
@@ -92,34 +93,64 @@ int find_last_number_user_save()
   return (int)user_number;
 }
 
+void delete_user()
+{
+  int total_user = find_last_number_user_save();
+  for (size_t user_number = 1; user_number <= total_user; user_number++)
+  {
+    for (size_t number_file = 0; number_file < ENROLL_CONFIRM_TIMES; number_file++)
+    {
+      char str[33];
+      char str2[33];
+      snprintf(str, sizeof(str), "/usuario_%d/d_matrix_%d.obj", user_number, number_file);
+      snprintf(str2, sizeof(str2), "/usuario_%d/d_buffer_%d.obj", user_number, number_file);
+      SPIFFS.remove(str);
+      SPIFFS.remove(str2);
+    }
+  }
+  display_write_string(" usuarios \n  deletados ");
+}
+
+bool compare_array(int array1[3], int array2[3])
+{
+  bool is_same = true;
+
+  // Compara os elementos dos dois vetores
+  for (int i = 0; i < 3; i++)
+  {
+    if (array1[i] != array2[i])
+    {
+      is_same = false;
+      break;
+    }
+  }
+  return is_same;
+}
+
 bool enter_password(bool push_button_up, bool push_button_down)
 {
   if (push_button_up)
   {
-    password_temp[current_position] = (password_temp[current_position] + 1) % 10; // Incrementar o dígito
+    password_temp[current_position] = (password_temp[current_position] + 1) % 10; // Incrementar um dígito
     delay(100);
   }
 
-  // Ler o botão de alterar a posição do dígito
   if (push_button_down)
   {
     current_position = (current_position + 1) % 3; // Avançar para a próxima posição
     delay(100);
   }
 
-  bool is_same = true;
+  bool is_delete_user = compare_array(password_temp, password_del);
 
-  // Comparar os elementos dos dois vetores
-  for (int i = 0; i < 3; i++)
+  if (is_delete_user)
   {
-    if (password_temp[i] != password[i])
-    {
-      is_same = false;
-      break;
-    }
+    delete_user();
   }
 
-  if (is_same)
+  bool is_password = compare_array(password_temp, password);
+
+  if (is_password)
   {
     print("Senha correta.\n");
     display_write_string(" senha \n  correta ", TEXT_SIZE_MEDIUM, TFT_DARKGREEN);

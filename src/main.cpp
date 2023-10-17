@@ -82,7 +82,8 @@ void menu_option()
   {
     init_timer(TIME_DEFAULT, &return_menu);
 
-    display_initial_count();
+    display_write_string(" Enquadre seu  \n \n   Rosto na  \n \n  Tela ", TEXT_SIZE_DEFAULT, TFT_MAROON);
+    delay(300);
     digitalWrite(FLASH_PIN, HIGH);
 
     selected_option = LOGIN_OPTION;
