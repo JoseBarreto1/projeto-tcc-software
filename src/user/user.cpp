@@ -103,7 +103,7 @@ void delete_user()
       char str[33];
       char str2[33];
       snprintf(str, sizeof(str), "/usuario_%d/d_matrix_%d.obj", user_number, number_file);
-      snprintf(str2, sizeof(str2), "/usuario_%d/d_buffer_%d.obj", user_number, number_file);
+      snprintf(str2, sizeof(str2), "/usuario_%d/d_buffer_%d.dat", user_number, number_file);
       SPIFFS.remove(str);
       SPIFFS.remove(str2);
     }
