@@ -9,7 +9,7 @@ void display_init()
 	tft.begin();
 	tft.setRotation(0); // 0 & 2 Portrait. 1 & 3 landscape
 	display_write_string("  Bem   \n \n   vindo ", TEXT_SIZE_MEDIUM, TFT_DARKGREEN);
-	delay(100);
+	delay(250);
 }
 
 void init_SPIFFS()
@@ -69,7 +69,7 @@ void display_error()
 void display_menu()
 {
 	fex.drawJpgFile(SPIFFS, "/_initial.jpeg", 0, 0);
-	delay(400); // Debounce
+	delay(200); // Debounce
 }
 
 void display_initial_count()

@@ -16,18 +16,9 @@ camera_fb_t *fb = NULL;
 
 void setup()
 {
-  Serial.begin(115200);
-
-  // inicializando pinos de entrada e saída
-  pinMode(FLASH_PIN, OUTPUT);
-  pinMode(RELAY_PIN, OUTPUT);
-  pinMode(PUSH_BUTTON_1, INPUT_PULLUP);
-  pinMode(PUSH_BUTTON_2, INPUT_PULLUP);
-  digitalWrite(FLASH_PIN, LOW);
-  digitalWrite(RELAY_PIN, LOW);
+  debug_init();
 
   display_init();
-  delay(200);
 
   camera_init();
 
@@ -37,6 +28,13 @@ void setup()
 
   user_number = find_last_number_user_save();
   init_face_id(&id_list, user_number);
+
+  // inicializando o pinos de entrada e saída
+  pinMode(RELAY_PIN, OUTPUT);
+  pinMode(PUSH_BUTTON_1, INPUT);
+  pinMode(PUSH_BUTTON_2, INPUT_PULLDOWN);
+
+  digitalWrite(RELAY_PIN, LOW);
 }
 
 void return_menu(void *arg)
@@ -50,6 +48,7 @@ void return_menu(void *arg)
   }
   digitalWrite(FLASH_PIN, LOW);
   display_error();
+  pinMode(PUSH_BUTTON_2, INPUT_PULLDOWN);
   selected_option = MENU_OPTION;
   return;
 }
@@ -59,19 +58,23 @@ void open_door()
   if (digitalRead(RELAY_PIN) == LOW)
   {
     digitalWrite(RELAY_PIN, HIGH);
-    print("Porta Destrancada");
-    delay(400); // Debounce
+    display_write_string("Abrindo \n \n  porta ", TEXT_SIZE_MEDIUM, TFT_DARKGREEN);
+    delay(2000);
     digitalWrite(RELAY_PIN, LOW);
   }
+
+  selected_option = MENU_OPTION;
+  return;
 }
 
 void success_face_detected()
 {
-  print("--------- Chegou ----------");
-  digitalWrite(FLASH_PIN, LOW);
-  selected_option = MENU_OPTION;
+  stop_timer();
   display_success();
-  open_door();
+  digitalWrite(FLASH_PIN, LOW);
+  pinMode(PUSH_BUTTON_2, INPUT_PULLDOWN);
+  selected_option = OPEN_DOOR;
+  return;
 }
 
 void menu_option()
@@ -82,8 +85,9 @@ void menu_option()
   {
     init_timer(TIME_DEFAULT, &return_menu);
 
-    display_write_string(" Enquadre seu  \n \n   Rosto na  \n \n  Tela ", TEXT_SIZE_DEFAULT, TFT_MAROON);
-    delay(300);
+    display_write_string("Enquadre seu\n \n      Rosto na \n \n        Tela \n", TEXT_SIZE_DEFAULT, TFT_MAROON);
+    delay(4000);
+    pinMode(FLASH_PIN, OUTPUT);
     digitalWrite(FLASH_PIN, HIGH);
 
     selected_option = LOGIN_OPTION;
@@ -117,6 +121,7 @@ void registration()
     init_timer(TIME_DEFAULT, &return_menu);
 
     display_initial_count();
+    pinMode(FLASH_PIN, OUTPUT);
     digitalWrite(FLASH_PIN, HIGH);
 
     selected_option = LOGIN_OPTION;
@@ -139,6 +144,10 @@ void loop()
 
   case REGISTER_OPTION:
     registration();
+    break;
+
+  case OPEN_DOOR:
+    open_door();
     break;
 
   default:

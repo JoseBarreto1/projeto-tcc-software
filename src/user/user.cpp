@@ -129,6 +129,8 @@ bool compare_array(int array1[3], int array2[3])
 
 bool enter_password(bool push_button_up, bool push_button_down)
 {
+  display_password(current_position, password_temp);
+
   if (push_button_up)
   {
     password_temp[current_position] = (password_temp[current_position] + 1) % 10; // Incrementar um dígito

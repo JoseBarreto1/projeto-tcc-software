@@ -1,5 +1,15 @@
 #include "debug.h"
 
+void debug_init() 
+{
+	if (ENABLE_PRINT_DEBUG == 1)
+	{
+		Serial.begin(115200);
+		return;
+	}
+    Serial.end();
+}
+
 void print(String value, int8_t number)
 {
 	if (ENABLE_PRINT_DEBUG == 1)
