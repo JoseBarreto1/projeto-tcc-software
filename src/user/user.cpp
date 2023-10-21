@@ -108,7 +108,8 @@ void delete_user()
       SPIFFS.remove(str2);
     }
   }
-  display_write_string(" usuarios \n  deletados ");
+  display_write_string(" usuarios \n \n  deletados ");
+  delay(800);
 }
 
 bool compare_array(int array1[3], int array2[3])
@@ -143,13 +144,6 @@ bool enter_password(bool push_button_up, bool push_button_down)
     delay(100);
   }
 
-  bool is_delete_user = compare_array(password_temp, password_del);
-
-  if (is_delete_user)
-  {
-    delete_user();
-  }
-
   bool is_password = compare_array(password_temp, password);
 
   if (is_password)
@@ -162,6 +156,21 @@ bool enter_password(bool push_button_up, bool push_button_down)
   else
   {
     print("Senha incorreta.\n");
+    return false;
+  }
+}
+
+bool delete_password()
+{
+  bool is_delete_user = compare_array(password_temp, password_del);
+
+  if (is_delete_user)
+  {
+    delete_user();
+    return true;
+  }
+  else
+  {
     return false;
   }
 }

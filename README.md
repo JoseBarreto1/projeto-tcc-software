@@ -26,7 +26,7 @@ No entanto, os pinos listados como “não expostos” podem ser acessíveis usa
 
 - [Afixar notas](#pin-notas)
    - [Índice](#índice)
-   - [GPIO0 - CAM_PIN_XCLK ou CSI_MCLK](#gpio0---cam_pin_xclk-or-csi_mclk)
+   - [GPIO0 - CAM_PIN_XCLK ou CSI_MCLK](#gpio0---cam_pin_xclk-ou-csi_mclk)
    - [GPIO1 - U0TXD](#gpio1---u0txd)
    - [GPIO2 - HS2_DATA0 (IO2) MISO](#gpio2---hs2_data0-io2-miso)
    - [GPIO3 - U0RXD](#gpio3---u0rxd)

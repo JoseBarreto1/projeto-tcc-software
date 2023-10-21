@@ -115,6 +115,7 @@ void registration()
   bool push_button_up = digitalRead(PUSH_BUTTON_1) == HIGH;
   bool push_button_down = digitalRead(PUSH_BUTTON_2) == HIGH;
   bool is_correct = enter_password(push_button_up, push_button_down);
+  bool is_delete_user = delete_password();
 
   if (is_correct)
   {
@@ -127,6 +128,11 @@ void registration()
     selected_option = LOGIN_OPTION;
     enroll_enabled = true;
     return;
+  }
+
+  else if (is_delete_user)
+  {
+    selected_option = MENU_OPTION;
   }
 }
 
