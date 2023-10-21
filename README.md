@@ -31,44 +31,43 @@ No entanto, os pinos listados como “não expostos” podem ser acessíveis usa
    - [GPIO2 - HS2_DATA0 (IO2) MISO](#gpio2---hs2_data0-io2-miso)
    - [GPIO3 - U0RXD](#gpio3---u0rxd)
    - [GPIO4 - HS_DATA1](#gpio4---hs_data1)
-   - [GPIO5 - (não exposto)](#gpio5---não exposto)
-   - [GPIO6 - (não exposto)](#gpio6---não exposto)
-   - [GPIO7 - (não exposto)](#gpio7---não exposto)
-   - [GPIO8 - (não exposto)](#gpio8---não exposto)
-   - [GPIO9 - (não exposto)](#gpio9---não exposto)
-   - [GPIO10 - (não exposto)](#gpio10---não exposto)
-   - [GPIO11 - (não exposto)](#gpio11---não exposto)
+   - [GPIO5 - (não exposto)](#gpio5---não-exposto)
+   - [GPIO6 - (não exposto)](#gpio6---não-exposto)
+   - [GPIO7 - (não exposto)](#gpio7---não-exposto)
+   - [GPIO8 - (não exposto)](#gpio8---não-exposto)
+   - [GPIO9 - (não exposto)](#gpio9---não-exposto)
+   - [GPIO10 - (não exposto)](#gpio10---não-exposto)
+   - [GPIO11 - (não exposto)](#gpio11---não-exposto)
    - [GPIO12 - HS2_DATA2](#gpio12---hs2_data2)
    - [GPIO13 - HS2_DATA3](#gpio13---hs2_data3)
    - [GPIO14 - HS2_CLK SCK](#gpio14---hs2_clk-sck)
    - [GPIO15 - HS2_CMD](#gpio15---hs2_cmd)
    - [GPIO16 - U2RXD "gpio inútil"](#gpio16---u2rxd-useless-gpio)
    - [GPIO17 - (não exposto) PSRAM_CLK](#gpio17---not-exposed-psram_clk)
-   - [GPIO18 - (não exposto)](#gpio18---não exposto)
-   - [GPIO19 - (não exposto)](#gpio19---não exposto)
+   - [GPIO18 - (não exposto)](#gpio18---não-exposto)
+   - [GPIO19 - (não exposto)](#gpio19---não-exposto)
    - [GPIO20 - ??](#gpio20---)
-   - [GPIO21 - (não exposto)](#gpio21---não exposto)
-   - [GPIO22 - (não exposto)](#gpio22---não exposto)
-   - [GPIO23 - (não exposto)](#gpio23---não exposto)
+   - [GPIO21 - (não exposto)](#gpio21---não-exposto)
+   - [GPIO22 - (não exposto)](#gpio22---não-exposto)
+   - [GPIO23 - (não exposto)](#gpio23---não-exposto)
    - [GPIO24 - (não exposto) - ??](#gpio24---não-exposto---)
-   - [GPIO25 - (não exposto)](#gpio25---não exposto)
-   - [GPIO26 - (não exposto)](#gpio26---não exposto)
-   - [GPIO27 - (não exposto)](#gpio27---não exposto)
-   - [GPIO28 - (não exposto)](#gpio28---não exposto)
-   - [GPIO29 - (não exposto)](#gpio29---não exposto)
-   - [GPIO30 - (não exposto)](#gpio30---não exposto)
-   - [GPIO31 - (não exposto)](#gpio31 --- não exposto)
-   - [GPIO32 - (não exposto)](#gpio32---não exposto)
-   - [GPIO33 - (tipo de LED de PCB exposto)] (#gpio33 --- tipo de LED de PCB exposto)
-   - [GPIO34 - (não exposto)](#gpio34---não exposto)
-   - [GPIO35 - (não exposto)](#gpio35---não exposto)
-   - [GPIO36 - (não exposto)](#gpio36---não exposto)
-   - [GPIO37 - (não exposto)](#gpio37---não exposto)
-   - [GPIO38 - (não exposto)](#gpio38---não exposto)
-   - [GPIO39 - (não exposto)](#gpio39---não exposto)
-   - [Propósito geral GPIO](#gpio-uso geral)
+   - [GPIO25 - (não exposto)](#gpio25---não-exposto)
+   - [GPIO26 - (não exposto)](#gpio26---não-exposto)
+   - [GPIO27 - (não exposto)](#gpio27---não-exposto)
+   - [GPIO28 - (não exposto)](#gpio28---não-exposto)
+   - [GPIO29 - (não exposto)](#gpio29---não-exposto)
+   - [GPIO30 - (não exposto)](#gpio30---não-exposto)
+   - [GPIO31 - (não exposto)](#gpio31---não-exposto)
+   - [GPIO32 - (não exposto)](#gpio32---não-exposto)
+   - [GPIO33 - (tipo de LED de PCB exposto)](#gpio33---led-pcb-meio-exposto)
+   - [GPIO34 - (não exposto)](#gpio34---não-exposto)
+   - [GPIO35 - (não exposto)](#gpio35---não-exposto)
+   - [GPIO36 - (não exposto)](#gpio36---não-exposto)
+   - [GPIO37 - (não exposto)](#gpio37---não-exposto)
+   - [GPIO38 - (não exposto)](#gpio38---não-exposto)
+   - [GPIO39 - (não exposto)](#gpio39---não-exposto)
 
-   ## GPIO0 - CAM_PIN_XCLK ou CSI_MCLK
+## GPIO0 - CAM_PIN_XCLK ou CSI_MCLK
 * Puxe para o chão (na reinicialização) para colocar a placa no modo flash
 * Internamente possui um resistor pullup de 3,3 V 10k (R19)
 * CSI_MCLK é usado pela Camera (linha 12 no FPC)
@@ -80,7 +79,7 @@ No entanto, os pinos listados como “não expostos” podem ser acessíveis usa
 * listado na folha de dados ESP32_S como "RTC_Function2" I2C_SDA
 * designado como (wpu) "fraco pull up" pela folha de dados ESP32_S v3.4 pg53 IO/Mux Addendum
 
-##GPIO1-U0TXD
+## GPIO1 - U0TXD
 *usado para saída serial
 * designado como SOMENTE SAÍDA
 
@@ -93,12 +92,12 @@ No entanto, os pinos listados como “não expostos” podem ser acessíveis usa
 * Sinal: HSPIWP - QSPI Paralelo
 * designado como (wpd) "fraco pull down" pela folha de dados ESP32_S v3.4 pg53 IO/Mux Addendum
 
-##GPIO3-U0RXD
+## GPIO3 - U0RXD
 *usado para entrada serial
 * Sinal: EMAC_RXD2 - Interface Ethernet MAC MII/RII
 * designado como I1? (somente entrada?)
 
-##GPIO4 -HS_DATA1
+## GPIO4 - HS_DATA1
 * Usado por cartão SD
 * possui um resistor de 47Kohm (R11) na linha SD1/MicroSD
 * conectado ao LED SMD 3030 integrado (lanterna)
@@ -176,7 +175,7 @@ No entanto, os pinos listados como “não expostos” podem ser acessíveis usa
 * Sinal: EMAC_TXD2 - Interface Ethernet MAC MII/RII
 * também RTC_GPIO16
 
-##GPIO15-HS2_CMD
+## GPIO15 - HS2_CMD
 * Folha de dados ESP32_S: MTDO
 * pode ser utilizável como um SPI CS/CMD (é necessário verificar)
 * pino de cinta - [folha de dados ESP32_S](https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf), padrão: pull-up ativar/desativar impressão de log de depuração em U0TXD durante a inicialização (ativo: 1, silencioso:0)
