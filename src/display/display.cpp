@@ -61,7 +61,7 @@ void display_success()
 void display_error()
 {
 	fex.drawJpgFile(SPIFFS, "/_failure.jpeg", 0, 0);
-	delay(200);
+	delay(600);
 	tft.fillScreen(TFT_BLACK);
 	delay(50);
 }

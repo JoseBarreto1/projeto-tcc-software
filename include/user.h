@@ -17,4 +17,4 @@ int find_last_number_user_save();
 
 bool enter_password(bool push_button_up, bool push_button_down);
 
-bool delete_password();
+void delete_password();
