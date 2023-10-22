@@ -8,12 +8,6 @@ int run_face_recognition(face_id_list *id_list, dl_matrix3du_t *image_matrix, bo
 	dl_matrix3du_t *aligned_face = NULL;
 	int matched_id = -1;
 
-	if (MAX_NUMBER_USER == *user_number)
-	{
-		print("Não foi possível cadastrar novos usuarios");
-		return matched_id;
-	}
-
 	aligned_face = dl_matrix3du_alloc(1, FACE_WIDTH, FACE_HEIGHT, 3);
 
 	if (!aligned_face)
@@ -25,18 +19,27 @@ int run_face_recognition(face_id_list *id_list, dl_matrix3du_t *image_matrix, bo
 	{
 		if (*enroll_enabled)
 		{
-			print("cadastrando rosto");
-			int8_t number_file = enroll_face(id_list, aligned_face);
-
-			int next_user = *user_number + 1;
-			save_user(number_file, aligned_face, next_user);
-
-			print("Inscrevendo-se #: %d\n", number_file);
-			if (number_file == 0)
+			if (MAX_NUMBER_USER == *user_number)
 			{
-				*user_number = next_user;
-				*enroll_enabled = false;
-				matched_id = 0;
+				print("Não foi possível cadastrar novos usuarios");
+				dl_matrix3du_free(aligned_face);
+				return matched_id;
+			}
+			else
+			{
+				print("cadastrando rosto");
+				int8_t number_file = enroll_face(id_list, aligned_face);
+
+				int next_user = *user_number + 1;
+				save_user(number_file, aligned_face, next_user);
+
+				print("Inscrevendo-se #: %d\n", number_file);
+				if (number_file == 0)
+				{
+					*user_number = next_user;
+					*enroll_enabled = false;
+					matched_id = 0;
+				}
 			}
 		}
 		else

@@ -10,6 +10,7 @@
 // variaveis globais
 static face_id_list id_list = {0};
 static bool enroll_enabled = true;
+static bool reset_password = true;
 static int user_number = 0;
 static int selected_option = MENU_OPTION;
 camera_fb_t *fb = NULL;
@@ -97,6 +98,8 @@ void menu_option()
 
   else if (digitalRead(PUSH_BUTTON_2) == HIGH)
   {
+    init_timer(TIME_DEFAULT, &return_menu);
+    reset_password = true;
     selected_option = REGISTER_OPTION;
     return;
   }
@@ -114,7 +117,7 @@ void registration()
 {
   bool push_button_up = digitalRead(PUSH_BUTTON_1) == HIGH;
   bool push_button_down = digitalRead(PUSH_BUTTON_2) == HIGH;
-  bool is_correct = enter_password(push_button_up, push_button_down);
+  bool is_correct = enter_password(push_button_up, push_button_down, &reset_password);
 
   if (is_correct)
   {

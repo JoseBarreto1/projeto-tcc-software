@@ -129,20 +129,26 @@ bool compare_array(int array1[3], int array2[3])
   return is_same;
 }
 
-bool enter_password(bool push_button_up, bool push_button_down)
+bool enter_password(bool push_button_up, bool push_button_down, bool *reset_password)
 {
+  if (*reset_password)
+  {
+    memset(password_temp, 0, sizeof(password_temp));
+    *reset_password = false;
+  }
+
   display_password(current_position, password_temp);
 
   if (push_button_up)
   {
     password_temp[current_position] = (password_temp[current_position] + 1) % 10; // Incrementar um dígito
-    delay(100);
+    delay(80);
   }
 
-  if (push_button_down)
+  else if (push_button_down)
   {
     current_position = (current_position + 1) % 3; // Avançar para a próxima posição
-    delay(100);
+    delay(80);
   }
 
   delete_password();
@@ -153,6 +159,7 @@ bool enter_password(bool push_button_up, bool push_button_down)
     print("Senha correta.\n");
     display_write_string(" senha \n  correta ", TEXT_SIZE_MEDIUM, TFT_DARKGREEN);
     delay(800);
+    memset(password_temp, 0, sizeof(password_temp));
     return true;
   }
   else
