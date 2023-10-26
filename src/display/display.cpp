@@ -7,7 +7,7 @@ TFT_eFEX fex = TFT_eFEX(&tft);
 void display_init()
 {
 	tft.begin();
-	tft.setRotation(0); // 0 & 2 Portrait. 1 & 3 landscape
+	tft.setRotation(2); // 0 & 2 Portrait. 1 & 3 landscape
 	display_write_string("  Bem   \n \n   vindo ", TEXT_SIZE_MEDIUM, TFT_DARKGREEN);
 	delay(250);
 }
