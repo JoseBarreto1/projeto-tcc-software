@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"name": "projeto-tcc-software",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"teste": "cpp",
+			"flash": "c",
+			"fr": "c",
+			"rascunho": "c",
+			"array": "cpp",
+			"string": "cpp",
+			"sstream": "cpp",
+			"algorithm": "cpp",
+			"tft_espi.h": "c",
+			"tft_efex.h": "c",
+			"*.tcc": "cpp",
+			"fstream": "cpp",
+			"type_traits": "cpp"
+		}
+	}
+}
