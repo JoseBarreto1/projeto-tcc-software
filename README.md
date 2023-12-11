@@ -3,19 +3,36 @@ Projeto de TCC - UTFPR
 
 Implementação feita a partir da biblioteca do ESP32-CAM: esp-dl (face_detect e recognize_face), utilizando a Ferramenta **PlatformIO**.
 
-Antes de enviar o código, algumas coisas precisam ser configuradas no Arduino IDE. Se esta é sua primeira vez com o ESP32-CAM no Arduino IDE você precisa configurar as bibliotecas de hardware do ESP32, aprenda a conectar e testar seguindo este tutorial ESP32-CAM no Arduino IDE
+Existem três bibliotecas que precisam ser instaladas. O TFT_eSPI e TFT_eFEX.
 
-Existem três bibliotecas que precisam ser instaladas. O TFT_eSPI pode ser facilmente instalado a partir do gerenciador de bibliotecas IDE (Ferramentas > Gerenciar Bibliotecas) procurando por TFT_eSPI. As bibliotecas TFT_eFEX e ESPAsyncWebserver precisam ser instaladas baixando as bibliotecas usando o link 'Download ZIP' e no IDE instalando-as com Sketch > Incluir Biblioteca > Adicionar Biblioteca .ZIP.
+```
+lib_deps = 
+	bodmer/TFT_eSPI@^2.2.6
+	bodmer/TFT_eFEX@^0.0.8
+	bodmer/JPEGDecoder@^1.8.1
+
+```
 
 A biblioteca TFT_eSPI precisa ser configurada para funcionar com o painel TFT ST7735S. Copie o conteúdo do arquivo User_Setup.h para o arquivo de biblioteca recém-instalado User_Setup.h encontrado em Documentos > Arduino > bibliotecas > TFT_eSPI (.pio/libdeps/esp32cam/TFT_eSPI/User_Setup.h).
 
-Caso queira utilizar a animação de contagem regressiva, as imagens para isso precisam ser carregadas na memória do ESP32. Para fazer isso siga as instruções para instalar o uploader de pasta de dados aqui: ESP32 Data Folder Uploader . Lembre-se de que se você alterar o esquema de partição no IDE, esses dados serão sobrescritos.
+Como interromper os alertas:
 
-
-Adicionado recurso para interromper alertas.
-
-// Define no setup para desabilitar todos os #warnings da biblioteca (pode ser colocado em User_Setup_Select.h)
+// Para desabilitar todos os #warnings da biblioteca (pode ser colocado em User_Setup_Select.h) a seguinte linha:
 #define DISABLE_ALL_LIBRARY_WARNINGS
+
+Outro detalhe é que para rodar o projeto também é preciso que as imagens que estão na pasta "data" sejam carregadas na memória flash do ESP32 (filesystem/spiffs). 
+
+```
+board_build.partitions = no_ota.csv
+board_build.filesystem = spiffs
+
+```
+
+Para fazer isso siga as instruções abaixo: 
+
+https://randomnerdtutorials.com/esp32-vs-code-platformio-spiffs/
+
+Obs: Caso altere o esquema de partição no IDE, esses dados serão sobrescritos
 
 ## Estrutura do projeto 📁
 
@@ -51,18 +68,18 @@ lib/
 |- main.cpp # Código principal
 ```
 
-## ARQUIVOS .H
+## ARQUIVOS .h
 
-Um arquivo de cabeçalho é um arquivo que contém declarações C e definições de macro
+Um arquivo de cabeçalho é um arquivo que contém declarações/interfaces em C++, junto das definições/contratos
 para ser compartilhado entre vários arquivos de origem do projeto. Você solicita o uso de um
 arquivo de cabeçalho no arquivo fonte do seu projeto (C, C++, etc) localizado na pasta `src`
 incluindo-o, com a diretiva de pré-processamento C `#include'.
 
-```src/main.c
+```src/debug/debug.cpp
 
-#include "cabeçalho.h"
+#include "debug.h"
 
-int principal (vazio)
+void print(int value)
 {
   ...
 }
@@ -78,8 +95,7 @@ encontrar e alterar todas as cópias, bem como o risco de que uma falha em
 encontrar uma cópia resultará em inconsistências dentro de um programa.
 
 Em C, a convenção usual é dar nomes aos arquivos de cabeçalho que terminem com `.h'.
-É mais portátil usar apenas letras, dígitos, travessões e sublinhados em
-nomes de arquivos de cabeçalho e no máximo um ponto.
+
 
 ## FUNCIONAMENTO DO PROJETO
 
