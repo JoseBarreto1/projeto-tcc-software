@@ -3,7 +3,17 @@ Projeto de TCC - UTFPR
 
 Implementação feita a partir da biblioteca do ESP32-CAM: esp-dl (face_detect e recognize_face), utilizando a Ferramenta **PlatformIO**.
 
-Existem três bibliotecas que precisam ser instaladas. O TFT_eSPI e TFT_eFEX.
+Algumas configurações iniciais devem ser feitas no platformio.ini
+
+```
+[env:esp32cam]
+platform = espressif32@2
+board = esp32cam
+framework = arduino
+
+```
+
+Existem três bibliotecas que precisam ser instaladas: O TFT_eSPI, TFT_eFEX e JPEGDecoder.
 
 ```
 lib_deps = 
@@ -31,6 +41,8 @@ board_build.filesystem = spiffs
 Para fazer isso siga as instruções abaixo: 
 
 https://randomnerdtutorials.com/esp32-vs-code-platformio-spiffs/
+
+![Image 1](extra/filesystem.png)
 
 Obs: Caso altere o esquema de partição no IDE, esses dados serão sobrescritos
 
@@ -448,7 +460,7 @@ No entanto, os pinos listados como “não expostos” podem ser acessíveis usa
 
 Esquema do ESP32-S
 
-![Image 12](imgs/esquema.png)
+![Image 12](extra/esquema.png)
 
 Refência:
 
