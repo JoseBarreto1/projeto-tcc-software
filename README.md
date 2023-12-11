@@ -1,5 +1,7 @@
 # projeto-tcc-software
-Projeto de tcc - UTFPR
+Projeto de TCC - UTFPR
+
+Feito implementando a lib do ESP32CAM: esp-dl (face_detect e recognize_face), utilizando a Ferramenta **PlatformIO**.
 
 Antes de enviar o código, algumas coisas precisam ser configuradas no Arduino IDE. Se esta é sua primeira vez com o ESP32-CAM no Arduino IDE você precisa configurar as bibliotecas de hardware do ESP32, aprenda a conectar e testar seguindo este tutorial ESP32-CAM no Arduino IDE
 
@@ -15,7 +17,125 @@ Adicionado recurso para interromper alertas.
 // Define no setup para desabilitar todos os #warnings da biblioteca (pode ser colocado em User_Setup_Select.h)
 #define DISABLE_ALL_LIBRARY_WARNINGS
 
-# Fixar notas
+# Estrutura do projeto 📁
+
+```sh
+lib/
+|- include/ # Arquivos de cabeçalhos, onde é definido as interfaces dos métodos de cada arquivo
+|  |- camera.h
+|  |- constants.h
+|  |- debug.h
+|  |- display.h
+|  |- face_detect.h
+|  |- face_recognition.h
+|  |- sd_card.h
+|  |- timer.h
+|  |- user.h
+|- src/ # Implementações
+|  |- camera/ 
+|  |  |- camera.cpp # Métodos da câmera
+|  |- debug/
+|  |  |- debug.cpp # Métodos de debug no código. ENABLE_PRINT_DEBUG habilita e desabilita os prints no monitor serial
+|  |- display/
+|  |  |- display.cpp # Métodos para desenhar no display LCD (display_init, display_write_string, display_menu ...)
+|  |- face_detect/
+|  |  |- face_detect.cpp # Métodos para identificar rostos
+|  |- face_recognition/
+|  |  |- face_recognition.cpp # Métodos para reconhecimento facial (ler e cadastrar usuários)
+|  |- sd_card/
+|  |  |- sd_card.cpp # Métodos para leitura e gravação de arquivos no sd card
+|  |- timer/
+|  |  |- timer.cpp # Métodos do temporizador (init_timer, stop_timer)
+|  |- user/
+|  |  |- user.cpp # Métodos para gerenciar usuarios (save_user, load_user, delete_user, enter_password)
+|- main.cpp # Código principal
+```
+
+# ARQUIVOS .H
+
+Um arquivo de cabeçalho é um arquivo que contém declarações C e definições de macro
+para ser compartilhado entre vários arquivos de origem do projeto. Você solicita o uso de um
+arquivo de cabeçalho no arquivo fonte do seu projeto (C, C++, etc) localizado na pasta `src`
+incluindo-o, com a diretiva de pré-processamento C `#include'.
+
+```src/main.c
+
+#include "cabeçalho.h"
+
+int principal (vazio)
+{
+  ...
+}
+```
+
+Incluir um arquivo de cabeçalho produz os mesmos resultados que copiar o arquivo de cabeçalho
+em cada arquivo de origem que precisa dele. Essa cópia seria demorada
+e sujeito a erros. Com um arquivo de cabeçalho, as declarações relacionadas aparecem
+em apenas um lugar. Se eles precisarem ser alterados, eles podem ser alterados em um
+local, e os programas que incluem o arquivo de cabeçalho usarão automaticamente o
+nova versão na próxima recompilação. O arquivo de cabeçalho elimina o trabalho de
+encontrar e alterar todas as cópias, bem como o risco de que uma falha em
+encontrar uma cópia resultará em inconsistências dentro de um programa.
+
+Em C, a convenção usual é dar nomes aos arquivos de cabeçalho que terminem com `.h'.
+É mais portátil usar apenas letras, dígitos, travessões e sublinhados em
+nomes de arquivos de cabeçalho e no máximo um ponto.
+
+# FUNCIONAMENTO DO PROJETO
+
+- Fluxo de funcionamento
+
+![Image 1](imgs/fluxo.png)
+
+- Telas de inicialização
+
+![Image 2](imgs/fluxo-inicial.png)
+
+- Autenticação do usuário
+
+![Image 3](imgs/fluxo-login.png)
+
+- Cadastro de usuário
+
+![Image 4](imgs/fluxo-cadastro.png)
+
+- Deletar usuário
+
+![Image 5](imgs/fluxo-deletar.png)
+
+- Diagrama elétrico ESP32-CAM
+
+![Image 6](imgs/modulo_esp.png)
+
+- Diagrama elétrico Display LCD TFT ST7734
+
+![Image 7](imgs/modulo_tft.png)
+
+- Diagrama elétrico módulo relé
+
+![Image 8](imgs/modulo_rele_esquema.png)
+
+- Diagrama elétrico dos botões
+
+![Image 9](imgs/modulo_push.png)
+
+- Placa montada
+
+![Image 10](imgs/placa_montada.png)
+
+- Placa finalizada
+
+![Image 11](imgs/placa_case.png)
+
+- Exemplo do seu funcionamento
+
+![til](extra/disp.gif)
+
+# TRABALHO RELACIONADO
+
+https://github.com/JoseBarreto1/tcc
+
+# PINOS ESP32
 
 Você descobrirá que a maioria dos pinos da câmera ESP32 já estão em uso ou apresentam comportamentos instáveis.
 Para tornar as coisas um pouco mais confusas, o layout parece ter sido feito por um engenheiro embriagado ou (mais provavelmente) por um roteador automático de rastreamento.
@@ -309,6 +429,11 @@ No entanto, os pinos listados como “não expostos” podem ser acessíveis usa
 * ADC1_CH3
 * também RTC_GPIO3
 
-Refências:
+
+Esquema do ESP32-S
+
+![Image 12](imgs/esquema.png)
+
+Refência:
 
 https://microcontrollerslab.com/esp32-cam-ai-thinker-pinout-gpio-pins-features-how-to-program/
