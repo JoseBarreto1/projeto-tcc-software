@@ -1,7 +1,7 @@
-# projeto-tcc-software
+# Controle de acesso por Reconhecimento Facial
 Projeto de TCC - UTFPR
 
-Feito implementando a lib do ESP32CAM: esp-dl (face_detect e recognize_face), utilizando a Ferramenta **PlatformIO**.
+Implementação feita a partir da biblioteca do ESP32-CAM: esp-dl (face_detect e recognize_face), utilizando a Ferramenta **PlatformIO**.
 
 Antes de enviar o código, algumas coisas precisam ser configuradas no Arduino IDE. Se esta é sua primeira vez com o ESP32-CAM no Arduino IDE você precisa configurar as bibliotecas de hardware do ESP32, aprenda a conectar e testar seguindo este tutorial ESP32-CAM no Arduino IDE
 
@@ -17,7 +17,7 @@ Adicionado recurso para interromper alertas.
 // Define no setup para desabilitar todos os #warnings da biblioteca (pode ser colocado em User_Setup_Select.h)
 #define DISABLE_ALL_LIBRARY_WARNINGS
 
-# Estrutura do projeto 📁
+## Estrutura do projeto 📁
 
 ```sh
 lib/
@@ -51,7 +51,7 @@ lib/
 |- main.cpp # Código principal
 ```
 
-# ARQUIVOS .H
+## ARQUIVOS .H
 
 Um arquivo de cabeçalho é um arquivo que contém declarações C e definições de macro
 para ser compartilhado entre vários arquivos de origem do projeto. Você solicita o uso de um
@@ -81,61 +81,61 @@ Em C, a convenção usual é dar nomes aos arquivos de cabeçalho que terminem c
 É mais portátil usar apenas letras, dígitos, travessões e sublinhados em
 nomes de arquivos de cabeçalho e no máximo um ponto.
 
-# FUNCIONAMENTO DO PROJETO
+## FUNCIONAMENTO DO PROJETO
 
 - Fluxo de funcionamento
 
-![Image 1](imgs/fluxo.png)
+![Image 1](extra/fluxo.png)
 
 - Telas de inicialização
 
-![Image 2](imgs/fluxo-inicial.png)
+![Image 2](extra/fluxo-inicial.png)
 
 - Autenticação do usuário
 
-![Image 3](imgs/fluxo-login.png)
+![Image 3](extra/fluxo-login.png)
 
 - Cadastro de usuário
 
-![Image 4](imgs/fluxo-cadastro.png)
+![Image 4](extra/fluxo-cadastro.png)
 
 - Deletar usuário
 
-![Image 5](imgs/fluxo-deletar.png)
+![Image 5](extra/fluxo-deletar.png)
 
 - Diagrama elétrico ESP32-CAM
 
-![Image 6](imgs/modulo_esp.png)
+![Image 6](extra/modulo_esp.png)
 
 - Diagrama elétrico Display LCD TFT ST7734
 
-![Image 7](imgs/modulo_tft.png)
+![Image 7](extra/modulo_tft.png)
 
 - Diagrama elétrico módulo relé
 
-![Image 8](imgs/modulo_rele_esquema.png)
+![Image 8](extra/modulo_rele_esquema.png)
 
 - Diagrama elétrico dos botões
 
-![Image 9](imgs/modulo_push.png)
+![Image 9](extra/modulo_push.png)
 
 - Placa montada
 
-![Image 10](imgs/placa_montada.png)
+![Image 10](extra/placa_montada.png)
 
 - Placa finalizada
 
-![Image 11](imgs/placa_case.png)
+![Image 11](extra/placa_case.png)
 
 - Exemplo do seu funcionamento
 
 ![til](extra/disp.gif)
 
-# TRABALHO RELACIONADO
+## TRABALHO RELACIONADO
 
 https://github.com/JoseBarreto1/tcc
 
-# PINOS ESP32
+## PINOS ESP32
 
 Você descobrirá que a maioria dos pinos da câmera ESP32 já estão em uso ou apresentam comportamentos instáveis.
 Para tornar as coisas um pouco mais confusas, o layout parece ter sido feito por um engenheiro embriagado ou (mais provavelmente) por um roteador automático de rastreamento.
