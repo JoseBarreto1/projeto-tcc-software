@@ -1,44 +1,49 @@
 # Controle de acesso por Reconhecimento Facial
-Projeto de TCC - UTFPR
 
-Implementação feita a partir da biblioteca do ESP32-CAM: esp-dl (face_detect e recognize_face), utilizando a Ferramenta **PlatformIO**.
+Esse projeto foi desenvolvido tendo como base a biblioteca esp-dl (https://github.com/espressif/esp-dl) e 
+utilizou os métodos: *face_detect e recognize_face*.
 
-Algumas configurações iniciais devem ser feitas no platformio.ini
+- IDE utilizada: **PlatformIO**;
+
+- Placa utilizada: **ESP32-CAM**;
+
+Ao iniciar o projeto algumas configurações foram feitas no platformio.ini
 
 ```
 [env:esp32cam]
 platform = espressif32@2
 board = esp32cam
 framework = arduino
-
 ```
 
-Existem três bibliotecas que precisam ser instaladas: O TFT_eSPI, TFT_eFEX e JPEGDecoder.
+Tiveram que ser instaladas três bibliotecas: TFT_eSPI, TFT_eFEX e JPEGDecoder.
 
 ```
 lib_deps = 
 	bodmer/TFT_eSPI@^2.2.6
 	bodmer/TFT_eFEX@^0.0.8
 	bodmer/JPEGDecoder@^1.8.1
-
 ```
 
-A biblioteca TFT_eSPI precisa ser configurada para funcionar com o painel TFT ST7735S. Copie o conteúdo do arquivo User_Setup.h para o arquivo de biblioteca recém-instalado User_Setup.h encontrado em Documentos > Arduino > bibliotecas > TFT_eSPI (.pio/libdeps/esp32cam/TFT_eSPI/User_Setup.h).
+A biblioteca TFT_eSPI precisa ser configurada para funcionar com o Display TFT ST7735S. 
+Copie o conteúdo do arquivo **extra/User_Setup.h**, para o arquivo da biblioteca recém-instalada *User_Setup.h* encontrado em: 
+**.pio/libdeps/esp32cam/TFT_eSPI/User_Setup.h**
 
-Como interromper os alertas:
+Para desabilitar todos os warnings ou alertas da biblioteca, adicione em *User_Setup_Select.h* a seguinte linha:
 
-// Para desabilitar todos os #warnings da biblioteca (pode ser colocado em User_Setup_Select.h) a seguinte linha:
+```
 #define DISABLE_ALL_LIBRARY_WARNINGS
+```
 
-Outro detalhe é que para rodar o projeto também é preciso que as imagens que estão na pasta "data" sejam carregadas na memória flash do ESP32 (filesystem/spiffs). 
+Outro detalhe é que para rodar o projeto também é preciso que as imagens que estão na pasta **data** sejam carregadas na memória flash (filesystem/spiffs). 
+Para isso é preciso configurar a partição:
 
 ```
 board_build.partitions = no_ota.csv
 board_build.filesystem = spiffs
-
 ```
 
-Para fazer isso siga as instruções abaixo: 
+E também seguir as instruções abaixo: 
 
 https://randomnerdtutorials.com/esp32-vs-code-platformio-spiffs/
 
@@ -49,38 +54,38 @@ Obs: Caso altere o esquema de partição no IDE, esses dados serão sobrescritos
 ## Estrutura do projeto 📁
 
 ```sh
-lib/
-|- include/ # Arquivos de cabeçalhos, onde é definido as interfaces dos métodos de cada arquivo
-|  |- camera.h
-|  |- constants.h
-|  |- debug.h
-|  |- display.h
-|  |- face_detect.h
-|  |- face_recognition.h
-|  |- sd_card.h
-|  |- timer.h
-|  |- user.h
-|- src/ # Implementações
-|  |- camera/ 
-|  |  |- camera.cpp # Métodos da câmera
-|  |- debug/
-|  |  |- debug.cpp # Métodos de debug no código. ENABLE_PRINT_DEBUG habilita e desabilita os prints no monitor serial
-|  |- display/
-|  |  |- display.cpp # Métodos para desenhar no display LCD (display_init, display_write_string, display_menu ...)
-|  |- face_detect/
-|  |  |- face_detect.cpp # Métodos para identificar rostos
-|  |- face_recognition/
-|  |  |- face_recognition.cpp # Métodos para reconhecimento facial (ler e cadastrar usuários)
-|  |- sd_card/
-|  |  |- sd_card.cpp # Métodos para leitura e gravação de arquivos no sd card
-|  |- timer/
-|  |  |- timer.cpp # Métodos do temporizador (init_timer, stop_timer)
-|  |- user/
-|  |  |- user.cpp # Métodos para gerenciar usuarios (save_user, load_user, delete_user, enter_password)
-|- main.cpp # Código principal
+
+- include/ # Arquivos de cabeçalhos, onde é definido as interfaces dos métodos de cada arquivo
+  |- camera.h
+  |- constants.h
+  |- debug.h
+  |- display.h
+  |- face_detect.h
+  |- face_recognition.h
+  |- sd_card.h
+  |- timer.h
+  |- user.h
+- src/ # Implementações
+  |- camera/ 
+  |  |- camera.cpp # Métodos da câmera
+  |- debug/
+  |  |- debug.cpp # Métodos de debug no código. ENABLE_PRINT_DEBUG habilita e desabilita os prints no monitor serial
+  |- display/
+  |  |- display.cpp # Métodos para desenhar no display LCD (display_init, display_write_string, display_menu ...)
+  |- face_detect/
+  |  |- face_detect.cpp # Métodos para identificar rostos
+  |- face_recognition/
+  |  |- face_recognition.cpp # Métodos para reconhecimento facial (ler e cadastrar usuários)
+  |- sd_card/
+  |  |- sd_card.cpp # Métodos para leitura e gravação de arquivos no sd card
+  |- timer/
+  |  |- timer.cpp # Métodos do temporizador (init_timer, stop_timer)
+  |- user/
+  |  |- user.cpp # Métodos para gerenciar usuarios (save_user, load_user, delete_user, enter_password)
+- main.cpp # Código principal
 ```
 
-## ARQUIVOS .h
+## Arquivos .h
 
 Um arquivo de cabeçalho é um arquivo que contém declarações/interfaces em C++, junto das definições/contratos
 para ser compartilhado entre vários arquivos de origem do projeto. Você solicita o uso de um
